@@ -3,32 +3,64 @@ const Channel = require("../models/channel");
 // ==========================================================
 //                In Memory Map of Channel-User
 // ==========================================================
+//  channel_name ---> [ {name:"...", ws:<websocket>}, ... ]
 let channel_users = new Map();
 
 // add user to channel_user map if channel exists
 // else throw an error
-void function add_user(channel, user){
+function add_user(channel, uname){
     if(channel_users.get(channel)){
-        if(channel_users.get(channel).has(user)){
-            throw Error("User with nickname '"+ user +"' is already in the channel")
+        if(channel_users.get(channel).find( (x) => x.name === uname )){
+            throw Error(`User with nickname '${uname}' is already in the channel`)
         }
-        channel_users.get(channel).add(user);
+        channel_users.get(channel).push({name:uname, ws:undefined});
     }else{
         Channel.exists(channel, ()=>{
-            channel_users.set(channel, new Set([user]))
+            channel_users.set(channel, [{name:uname, ws:undefined}])
         }, ()=>{
-            throw Error("Channel does not exists, create new channel");
+            throw Error("add_user: Channel does not exists, create new channel");
         });
     }
 }
 
 // remove user from channel if channel exists
 // else throw an error
-void function remove_user(channel, user){
-    if(channel_users.get(channel)){
-        channel_users.get(channel).delete(user);
+function remove_user(channel, uname){
+    let ch = channel_users.get(channel);
+    if(ch){
+        let obj = ch.find( (x) => x.name === uname );
+        if(obj){
+            ch.splice(ch.indexOf(obj));
+        }
     }else{
-        throw Error("Channel does not exists, create new channel");
+        throw Error("remove_user: Channel does not exists, create new channel");
+    }
+}
+
+exports.attach_socket = (channel, uname, ws) => {
+    let ch = channel_users.get(channel);
+    if(ch){
+        let obj = ch.find( (x) => x.name === uname );
+        if(obj){
+            obj.ws = ws;
+        }else{
+            throw Error(`User '${uname}' does not exist`);
+        }
+    }else{
+        throw Error("attach_socket: Channel does not exists, create new channel");
+    }
+}
+
+exports.send_message = (channel, uname, msg) => {
+    let ch = channel_users.get(channel);
+    if(ch){
+        ch.forEach( x => {
+            if(x.name != uname && x.ws){
+                x.ws.send(msg);
+            }
+        })
+    }else{
+        throw Error("send_message: Channel does not exists, create new channel");
     }
 }
 
@@ -48,7 +80,9 @@ exports.createChannel = (req, res)=>{
     try{
         let ch_name = req.body.name;
         Channel.exists(ch_name, ()=>{
-            throw Error("Channel already exists, use different name");
+            let e = Error("Channel already exists, use different name");
+            console.log("createChannel: ", e.message);
+            res.status(200).json({error: e.message});
         }, ()=>{
             let newchannel = new Channel(ch_name);
             newchannel.save();
@@ -60,7 +94,7 @@ exports.createChannel = (req, res)=>{
     }
 }
 
-// render chat page on success 
+// render chat page on success else
 // render home page on error with error message
 exports.joinChannel = (req, res)=>{
     try{
@@ -77,6 +111,8 @@ exports.joinChannel = (req, res)=>{
 
 exports.leaveChannel = (req, res)=>{
     try{
+        // TODO: remove from map and close the socket
+        remove_user()
     }catch(e){
         console.log("leaveChannel: ", e.message);
     }
