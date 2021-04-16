@@ -1,4 +1,5 @@
 const Channel = require("../models/channel");
+const auth = require("../utils/helper");
 
 // ==========================================================
 //                In Memory Map of Channel-User
@@ -25,12 +26,14 @@ function add_user(channel, uname){
 
 // remove user from channel if channel exists
 // else throw an error
+// and also close the WEB SOCKET
 function remove_user(channel, uname){
     let ch = channel_users.get(channel);
     if(ch){
         let obj = ch.find( (x) => x.name === uname );
         if(obj){
             ch.splice(ch.indexOf(obj));
+            if(obj.ws){ obj.ws.close(); }
         }
     }else{
         throw Error("remove_user: Channel does not exists, create new channel");
@@ -94,14 +97,25 @@ exports.createChannel = (req, res)=>{
     }
 }
 
+/*
+    if JWT token is valid then there must be an entry in the
+        channel_user map for that
+    if there is no entry in map then JWT must me unset
+*/
+
 // render chat page on success else
 // render home page on error with error message
 exports.joinChannel = (req, res)=>{
     try{
-        let nickname = req.body.nickname;
-        let ch_name = req.body.channel;
-        add_user(ch_name, nickname);
-
+        // if there is already valid jwt then use that only
+        if(req.cookies.jwt && auth.verify(req.cookies.jwt) ){
+            // nothing to do actully
+        }else{
+            let nickname = req.body.nickname;
+            let ch_name = req.body.channel;
+            add_user(ch_name, nickname);
+            auth.set_jwt_token(ch_name, nickname, res);
+        }
         res.render("chat", {});
     }catch(e){
         console.log("joinChannel: ", e.message);
@@ -111,9 +125,16 @@ exports.joinChannel = (req, res)=>{
 
 exports.leaveChannel = (req, res)=>{
     try{
-        // TODO: remove from map and close the socket
-        remove_user()
+        if(req.cookies.jwt){
+            let dtoken = auth.decodeToken(req.cookies.jwt);
+            // will close ws and remove entry
+            remove_user(dtoken.channel, dtoken.name);
+            res.status(200).json({msg: "Left the channel"});
+        }else{
+            res.status(200).json({msg: "Not in any channel"});
+        }
     }catch(e){
         console.log("leaveChannel: ", e.message);
+        res.status(200).json({error: e.message});
     }
 }

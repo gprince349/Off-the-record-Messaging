@@ -3,12 +3,14 @@ const path = require("path");
 const express = require("express");
 const http = require("http");
 const WebSocket = require("ws");
+const cookieParser = require("cookie-parser");
 const db = require("./utils/database");
 const app = express();
 
 app.set('view engine', 'ejs');
 app.set('views', 'views');
-app.use(express.json())
+app.use(express.json());
+app.use(cookieParser());
 app.use(express.static(path.join(__dirname,'public')));
 
 // middleware to print every request on terminal
@@ -25,15 +27,21 @@ app.use("/", routes);
 const server = http.createServer(app);
 
 const ctrl = require("./controllers/controller");
+const auth = require("./utils/helper");
 // create websocket
 const wss = new WebSocket.Server({server});
 wss.on('connection', (ws, req) => {
     console.log("Got connection", req.url, req.socket.remoteAddress);
-    let s = req.url.split('/');
-    let channel = s[1];
-    let name = s[2];
     try{
-        ctrl.attach_socket(channel, name, ws);
+        let s = req.url.split('/');
+        let jwt = s[1];
+        let dtoken;
+        if(auth.verify(jwt)){
+            dtoken = auth.decodeToken(jwt);
+            ctrl.attach_socket(dtoken.channel, dtoken.name, ws);
+        }else{
+            throw Error("Token is not Valid")
+        }
     }catch(e){
         console.log("app.js:", e.message);
         ws.send(e.message);
@@ -41,10 +49,10 @@ wss.on('connection', (ws, req) => {
     }
 
     ws.onmessage = (msg) => {
-        ctrl.send_message(channel, name, msg);
+        ctrl.send_message(dtoken.channel, dtoken.name, msg);
     }
     ws.onclose = (e) => {
-        console.log(channel, name, "CLOSED");
+        console.log(dtoken.channel, dtoken.name, "CLOSED");
     }
 })
 
