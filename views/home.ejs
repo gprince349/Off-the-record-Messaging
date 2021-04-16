@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style> 
+input[type=text] {
+  width: 100%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  box-sizing:content-box;
+}
+</style>
+</head>
+<body>
+
+<h3>Join Channel</h3>
+
+<form action="/joinChannel" method="POST">
+  <label for="channelname">Channel Name</label>
+  <input type="text" id="cname" name="channel">
+  <label for="nickname">Nick Name</label>
+  <input type="text" id="nname" name="nickname">
+  <input type="submit"  value="enter" />
+</form>
+
+<h3>Create Channel</h3>
+
+<form action="/createChannel" method="POST">
+  <label for="channelname">Channel Name</label>
+  <input type="text" id="name" name="name">
+  
+  <input type="submit"  value="enter" />
+</form>
+
+
+</body>
+</html>

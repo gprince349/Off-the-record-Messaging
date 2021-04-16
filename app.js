@@ -8,14 +8,14 @@ const app = express();
 
 app.set('view engine', 'ejs');
 app.set('views', 'views');
-app.use(express.json())
+// app.use(express.json())
 app.use(express.static(path.join(__dirname,'public')));
 
 // middleware to print every request on terminal
-app.use('', (req, res, next)=>{
-    console.log(req.method, req.httpVersion, req.ip, req.url);
-    next();
-});
+// app.use('', (req, res, next)=>{
+//     console.log(req.method, req.httpVersion, req.ip, req.url);
+//     next();
+// });
 
 const routes = require("./routes/routes");
 app.use("/", routes);
@@ -27,6 +27,7 @@ const server = http.createServer(app);
 const ctrl = require("./controllers/controller");
 // create websocket
 const wss = new WebSocket.Server({server});
+
 wss.on('connection', (ws, req) => {
     console.log("Got connection", req.url, req.socket.remoteAddress);
     let s = req.url.split('/');
@@ -41,6 +42,7 @@ wss.on('connection', (ws, req) => {
     }
 
     ws.onmessage = (msg) => {
+        console.log(msg.data)
         ctrl.send_message(channel, name, msg);
     }
     ws.onclose = (e) => {

@@ -22,7 +22,6 @@ function add_user(channel, uname){
         });
     }
 }
-
 // remove user from channel if channel exists
 // else throw an error
 function remove_user(channel, uname){
@@ -79,6 +78,10 @@ exports.getHome = (req, res)=>{
 exports.createChannel = (req, res)=>{
     try{
         let ch_name = req.body.name;
+
+        console.log(req.body)
+        console.log(res.body)
+
         Channel.exists(ch_name, ()=>{
             let e = Error("Channel already exists, use different name");
             console.log("createChannel: ", e.message);
@@ -86,7 +89,8 @@ exports.createChannel = (req, res)=>{
         }, ()=>{
             let newchannel = new Channel(ch_name);
             newchannel.save();
-            res.status(200).json({status: "Channel Created."})
+            // res.status(200).json({status: "Channel Created."})
+            res.render('home', {})
         })
     }catch(e){
         console.log("createChannel: ", e.message);
