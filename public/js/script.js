@@ -1,4 +1,5 @@
-const socket = new WebSocket('wss://localhost/3000')
+const jwt = document.cookie.split('=')[1];
+const socket = new WebSocket(`ws://localhost:3000/${jwt}`)
 
 const chat = document.querySelector('.chat-form')
 const Input = document.querySelector('.chat-input')
@@ -35,7 +36,7 @@ chat.addEventListener('submit',event=> {
     Input.value = ''
 })
 
-socket.onmessage( msg =>{
+socket.onmessage = (msg) =>{
     // console.log('from server', msg)
-    renderMessage(msg,1)
-})
+    renderMessage(msg.data,1)
+}

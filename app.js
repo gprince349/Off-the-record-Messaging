@@ -38,23 +38,22 @@ wss.on('connection', (ws, req) => {
         let s = req.url.split('/');
         let jwt = s[1];
         let dtoken;
-        if(auth.verify(jwt)){
+        // if(auth.verify(jwt)){
             dtoken = auth.decodeToken(jwt);
             ctrl.attach_socket(dtoken.channel, dtoken.name, ws);
-        }else{
-            throw Error("Token is not Valid")
+        // }else{
+            // throw Error("Token is not Valid")
+        // }
+        ws.onmessage = (msg) => {
+            ctrl.send_message(dtoken.channel, dtoken.name, msg.data);
+        }
+        ws.onclose = (e) => {
+            console.log(dtoken.channel, dtoken.name, "CLOSED");
         }
     }catch(e){
         console.log("app.js:", e.message);
         ws.send(e.message);
         ws.close();
-    }
-
-    ws.onmessage = (msg) => {
-        ctrl.send_message(dtoken.channel, dtoken.name, msg);
-    }
-    ws.onclose = (e) => {
-        console.log(dtoken.channel, dtoken.name, "CLOSED");
     }
 })
 
