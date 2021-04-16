@@ -8,6 +8,7 @@ module.exports = class Channel{
     save(){
         try{
             var stmt = db.prepare("INSERT INTO channels (name) VALUES (?)");
+            // console.log(this.name)
             stmt.run(this.name);
             stmt.finalize();
         }catch(e){

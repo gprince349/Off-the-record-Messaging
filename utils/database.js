@@ -1,5 +1,5 @@
 var sqlite3 = require('sqlite3').verbose();
-var db = new sqlite3.Database('../otr.db', (err)=>{
+var db = new sqlite3.Database('./otr.db', (err)=>{
     if(err){
         console.log("Error while connecting to database", err.message);
     }else{
