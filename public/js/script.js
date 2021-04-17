@@ -1,5 +1,12 @@
 const jwt = document.cookie.split('=')[1];
+const dtoken = JSON.parse(atob(jwt.split('.')[1]));
+
 const socket = new WebSocket(`ws://localhost:3000/${jwt}`)
+
+const ch_name = document.getElementById("ch_name");
+const nick_name = document.getElementById("nick_name");
+ch_name.innerText = dtoken.channel;
+nick_name.innerText = dtoken.name;
 
 const chat = document.querySelector('.chat-form')
 const Input = document.querySelector('.chat-input')

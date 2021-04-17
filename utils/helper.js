@@ -32,14 +32,12 @@ function decodeToken(token){
 
 // middleware for authenticating clients
 function verify(token){
-    JWT.verify(token, process.env.SECRET, (err, decodedToken)=>{
-        if(err){
-            console.log(err, "Invalid Token");
-            return false;
-        }else{
-            return true;
-        }
-    });
+    try{
+        JWT.verify(token, process.env.SECRET);
+        return true;
+    }catch(e){
+        return false;
+    }
 }
 
 module.exports = {
