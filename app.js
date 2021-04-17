@@ -16,7 +16,7 @@ app.use(express.static(path.join(__dirname,'public')));
 
 // middleware to print every request on terminal
 app.use('', (req, res, next)=>{
-    console.log(req.method, req.httpVersion, req.ip, req.url);
+    console.log(req.method, req.ip, req.url);
     next();
 });
 
@@ -48,6 +48,7 @@ wss.on('connection', (ws, req) => {
             ctrl.send_message(dtoken.channel, dtoken.name, msg.data);
         }
         ws.onclose = (e) => {
+            ctrl.remove_user(dtoken.channel, dtoken.name);
             console.log(dtoken.channel, dtoken.name, "CLOSED");
         }
     }catch(e){

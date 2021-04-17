@@ -47,3 +47,7 @@ socket.onmessage = (msg) =>{
     // console.log('from server', msg)
     renderMessage(msg.data,1)
 }
+
+socket.onclose = (err) => {
+    renderMessage("Connection broken: "+err.message,1)
+}

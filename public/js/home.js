@@ -1,5 +1,6 @@
 const cch_form = document.getElementById("cch_form");
 const cch_msg = document.getElementById("cch_msg");
+const err_msg = document.getElementById("err_msg");
 
 cch_form.addEventListener('submit',event=> {
     event.preventDefault()
@@ -10,6 +11,7 @@ cch_form.addEventListener('submit',event=> {
     const submit_btn = document.getElementById("cch_submit");
     submit_btn.disabled = true;
     cch_msg.innerText = "";
+    err_msg.innerText = "";
 
     fetch('http://localhost:3000/createChannel', {
         method: 'POST',
