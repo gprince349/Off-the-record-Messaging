@@ -1,42 +1,34 @@
-const socket = new WebSocket('wss://localhost/3000')
+const cch_form = document.getElementById("cch_form");
+const cch_msg = document.getElementById("cch_msg");
 
-const chat = document.querySelector('.chat-form')
-const Input = document.querySelector('.chat-input')
-
-
-
-const chatWindow = document.querySelector('.chat-window')
-
-const renderMessage = (message,l) =>{
-    const div = document.createElement('div')
-    // const div2 = document.createElement('div')
-
-    div.classList.add('render-message')
-    // div2.classList.add('msg-cover')
-
-    div.innerText = message
-    if(l == 0){
-        div.style.color = "blue"
-        div.style.textAlign = "right"
-    }
-    else{
-        div.style.color = "red"
-        div.style.textAlign = "left"
-    }
-    // div2.append(div)
-    chatWindow.appendChild(div)
-}
-
-
-
-chat.addEventListener('submit',event=> {
+cch_form.addEventListener('submit',event=> {
     event.preventDefault()
-    socket.send(Input.value)
-    renderMessage(Input.value,0)
-    Input.value = ''
+
+    const name = document.getElementById("cch_name").value;
+    const data = { name: name };
+
+    const submit_btn = document.getElementById("cch_submit");
+    submit_btn.disabled = true;
+    cch_msg.innerText = "";
+
+    fetch('http://localhost:3000/createChannel', {
+        method: 'POST',
+        credentials: 'omit',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    })
+    .then(response => response.json())
+    .then(data => {
+        submit_btn.disabled = false;
+        cch_msg.innerText = JSON.stringify(data);
+        console.log('Success:', data);
+    })
+    .catch((error) => {
+        submit_btn.disabled = false;
+        console.error('Error:', error);
+    });
+
 })
 
-socket.onmessage( msg =>{
-    // console.log('from server', msg)
-    renderMessage(msg,1)
-})

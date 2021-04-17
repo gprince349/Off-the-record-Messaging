@@ -1,5 +1,6 @@
 const Channel = require("../models/channel");
 const auth = require("../utils/helper");
+const WebSocket = require("ws");
 
 // ==========================================================
 //                In Memory Map of Channel-User
@@ -9,12 +10,13 @@ let channel_users = new Map();
 
 // add user to channel_user map if channel exists
 // else throw an error
-function add_user(channel, uname){
+function add_user(channel, uname, ifExistError=true){
     if(channel_users.get(channel)){
-        if(channel_users.get(channel).find( (x) => x.name === uname )){
+        if(channel_users.get(channel).find( (x) => x.name === uname ) && ifExistError){
             throw Error(`User with nickname '${uname}' is already in the channel`)
+        }else{
+            channel_users.get(channel).push({name:uname, ws:undefined});
         }
-        channel_users.get(channel).push({name:uname, ws:undefined});
     }else{
         Channel.exists(channel, ()=>{
             channel_users.set(channel, [{name:uname, ws:undefined}])
@@ -57,7 +59,7 @@ exports.send_message = (channel, uname, msg) => {
     let ch = channel_users.get(channel);
     if(ch){
         ch.forEach( x => {
-            if(x.name != uname && x.ws){
+            if(x.name != uname && x.ws && x.ws.readyState == WebSocket.OPEN){
                 x.ws.send(msg);
             }
         })
@@ -82,8 +84,7 @@ exports.createChannel = (req, res)=>{
     try{
         let ch_name = req.body.name;
 
-        console.log(req.body)
-
+        if(!ch_name){ throw Error("Empty channel name not allowed"); }
         Channel.exists(ch_name, ()=>{
             let e = Error("Channel already exists, use different name");
             console.log("createChannel: ", e.message);
@@ -112,7 +113,8 @@ exports.joinChannel = (req, res)=>{
     try{
         // if there is already valid jwt then use that only
         if(req.cookies.jwt && auth.verify(req.cookies.jwt) ){
-            // nothing to do actully
+            const dtoken = auth.decodeToken(req.cookies.jwt);
+            add_user(dtoken.channel, dtoken.name, false);
         }else{
             let nickname = req.body.nickname;
             let ch_name = req.body.channel;
@@ -132,6 +134,7 @@ exports.leaveChannel = (req, res)=>{
             let dtoken = auth.decodeToken(req.cookies.jwt);
             // will close ws and remove entry
             remove_user(dtoken.channel, dtoken.name);
+            auth.unset_jwt_tokens(res);
             res.status(200).json({msg: "Left the channel"});
         }else{
             res.status(200).json({msg: "Not in any channel"});
