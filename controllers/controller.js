@@ -29,22 +29,22 @@ async function add_user(channel, uname, ifExistError=true){
 }
 // remove user from channel if channel exists
 // else throw an error
-// and also close the WEB SOCKET
-function remove_user(channel, uname){
+exports.remove_user = (channel, uname) => {
     let ch = channel_users.get(channel);
     if(ch){
         let obj = ch.find( (x) => x.name === uname );
         if(obj){
             ch.splice(ch.indexOf(obj));
-            if(obj.ws && obj.ws.readyState == WebSocket.OPEN){ 
-                obj.ws.close(); 
+            if(obj.ws){ 
+                // if valid socket existed only then send left msg bcz
+                // join msg is sent only when socket is attached
+                this.send_message(channel, "", `"${uname}" left the channel`);
             }
         }
     }else{
         throw Error("remove_user: Channel does not exists, create new channel");
     }
 }
-exports.remove_user = remove_user;
 
 exports.attach_socket = (channel, uname, ws) => {
     let ch = channel_users.get(channel);
@@ -55,6 +55,7 @@ exports.attach_socket = (channel, uname, ws) => {
                 throw Error("You are already connected from some other Tab/client");
             }else{
                 obj.ws = ws;
+                this.send_message(channel, uname, `"${uname}" joined the channel`);
             }
         }else{
             throw Error(`User '${uname}' does not exist`);
@@ -69,7 +70,7 @@ exports.send_message = (channel, uname, msg) => {
     if(ch){
         ch.forEach( x => {
             if(x.name != uname && x.ws && x.ws.readyState == WebSocket.OPEN){
-                x.ws.send(msg);
+                x.ws.send(JSON.stringify({name:uname, msg:msg}));
             }
         })
     }else{
@@ -111,17 +112,11 @@ exports.createChannel = async (req, res)=>{
 // render home page on error with error message
 exports.joinChannel = async (req, res)=>{
     try{
-        // if there is already valid jwt then use that only
-        if(req.cookies.jwt && auth.verify(req.cookies.jwt) ){
-            const dtoken = auth.decodeToken(req.cookies.jwt);
-            await add_user(dtoken.channel, dtoken.name, false);
-        }else{
-            let nickname = req.body.nickname;
-            let ch_name = req.body.channel;
-            await add_user(ch_name, nickname);
-            auth.set_jwt_token(ch_name, nickname, res);
-        }
-        res.render("chat", {});
+        let nickname = req.body.nickname;
+        let ch_name = req.body.channel;
+        await add_user(ch_name, nickname);
+        let token = auth.signAccessToken(ch_name, nickname);
+        res.render("chat", {token:token});
     }catch(e){
         console.log("joinChannel: ", e.message);
         res.redirect("/home");
@@ -130,12 +125,6 @@ exports.joinChannel = async (req, res)=>{
 
 exports.leaveChannel = (req, res)=>{
     try{
-        if(req.cookies.jwt){
-            let dtoken = auth.decodeToken(req.cookies.jwt);
-            // will close ws and remove entry
-            remove_user(dtoken.channel, dtoken.name);
-            auth.unset_jwt_tokens(res);
-        }
         res.redirect("/home")
     }catch(e){
         console.log("leaveChannel: ", e.message);

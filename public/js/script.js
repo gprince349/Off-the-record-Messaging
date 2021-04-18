@@ -1,7 +1,7 @@
-const jwt = document.cookie.split('=')[1];
-const dtoken = JSON.parse(atob(jwt.split('.')[1]));
+const token = document.getElementById("token").innerText;
+const dtoken = JSON.parse(atob(token.split('.')[1]));
 
-const socket = new WebSocket(`ws://localhost:3000/${jwt}`)
+const socket = new WebSocket(`ws://localhost:3000/${token}`)
 
 const ch_name = document.getElementById("ch_name");
 const nick_name = document.getElementById("nick_name");
@@ -44,8 +44,13 @@ chat.addEventListener('submit',event=> {
 })
 
 socket.onmessage = (msg) =>{
-    // console.log('from server', msg)
-    renderMessage(msg.data,1)
+    console.log(msg.data);
+    let obj = JSON.parse(msg.data);
+    let text = obj.name+"=>"+obj.msg;
+    if(obj.error){
+        text = obj.error;
+    }
+    renderMessage(text,1)
 }
 
 socket.onclose = (err) => {

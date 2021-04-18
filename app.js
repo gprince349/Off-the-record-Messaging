@@ -3,7 +3,7 @@ const path = require("path");
 const express = require("express");
 const http = require("http");
 const WebSocket = require("ws");
-const cookieParser = require("cookie-parser");
+// const cookieParser = require("cookie-parser");
 const db = require("./utils/database");
 const app = express();
 
@@ -11,7 +11,7 @@ app.set('view engine', 'ejs');
 app.set('views', 'views');
 app.use(express.urlencoded());
 app.use(express.json());
-app.use(cookieParser());
+// app.use(cookieParser());
 app.use(express.static(path.join(__dirname,'public')));
 
 // middleware to print every request on terminal
@@ -53,7 +53,8 @@ wss.on('connection', (ws, req) => {
         }
     }catch(e){
         console.log("app.js:", e.message);
-        ws.send(e.message);
+        ws.send(JSON.stringify({error:e.message}));
+        ctrl.remove_user(dtoken.channel, dtoken.name);
         ws.close();
     }
 })

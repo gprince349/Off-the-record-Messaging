@@ -14,18 +14,6 @@ function signAccessToken(channel, uname){
     return JWT.sign(payload, process.env.SECRET, options);
 }
 
-function set_jwt_token(channel, uname, res){
-    const token = signAccessToken(channel, uname);
-    res.cookie("jwt", token, {
-        // secure:true,
-        maxAge: cookie_expire_time,
-    });
-}
-
-function unset_jwt_tokens(res){
-    res.cookie('jwt', "", {maxAge:1});
-}
-
 function decodeToken(token){
     return JWT.decode(token)
 }
@@ -42,8 +30,6 @@ function verify(token){
 
 module.exports = {
     signAccessToken,
-    set_jwt_token,
     decodeToken,
-    unset_jwt_tokens,
     verify,
 }
