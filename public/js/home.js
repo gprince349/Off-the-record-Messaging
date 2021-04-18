@@ -13,7 +13,8 @@ cch_form.addEventListener('submit',event=> {
     cch_msg.innerText = "";
     err_msg.innerText = "";
 
-    fetch('http://localhost:3000/createChannel', {
+    const origin = window.location.origin;
+    fetch(`${origin}/createChannel`, {
         method: 'POST',
         credentials: 'omit',
         headers: {

@@ -34,12 +34,11 @@ const wss = new WebSocket.Server({server});
 
 wss.on('connection', (ws, req) => {
     console.log("Got connection", req.url, req.socket.remoteAddress);
+    let s = req.url.split('/');
+    let jwt = s[1];
+    let dtoken = auth.decodeToken(jwt);
     try{
-        let s = req.url.split('/');
-        let jwt = s[1];
-        let dtoken;
         if(auth.verify(jwt)){
-            dtoken = auth.decodeToken(jwt);
             ctrl.attach_socket(dtoken.channel, dtoken.name, ws);
         }else{
             throw Error("Token is not Valid")
@@ -61,6 +60,6 @@ wss.on('connection', (ws, req) => {
 
 
 // start server
-server.listen(Number(process.env.PORT), "",
+server.listen(Number(process.env.PORT), process.env.IPv6,
     ()=> console.log("listening on port", process.env.PORT)
 );

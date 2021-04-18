@@ -1,7 +1,8 @@
 const token = document.getElementById("token").innerText;
 const dtoken = JSON.parse(atob(token.split('.')[1]));
 
-const socket = new WebSocket(`ws://localhost:3000/${token}`)
+const host = window.location.host;
+const socket = new WebSocket(`ws://${host}/${token}`)
 
 const ch_name = document.getElementById("ch_name");
 const nick_name = document.getElementById("nick_name");

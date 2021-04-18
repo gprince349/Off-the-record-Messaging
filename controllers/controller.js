@@ -10,12 +10,10 @@ let channel_users = new Map();
 
 // add user to channel_user map if channel exists
 // else throw an error
-async function add_user(channel, uname, ifExistError=true){
+async function add_user(channel, uname){
     if(channel_users.get(channel)){
         if(channel_users.get(channel).find( (x) => x.name === uname )){
-            if(ifExistError){
-                throw Error(`User with nickname '${uname}' is already in the channel`)
-            }
+            throw Error(`User with nickname '${uname}' is already in the channel`)
         }else{
             channel_users.get(channel).push({name:uname, ws:undefined});
         }
@@ -38,7 +36,8 @@ exports.remove_user = (channel, uname) => {
             if(obj.ws){ 
                 // if valid socket existed only then send left msg bcz
                 // join msg is sent only when socket is attached
-                this.send_message(channel, "", `"${uname}" left the channel`);
+                console.log(`"${uname}" left the channel`);
+                this.send_message(channel, uname, `"${uname}" left the channel`);
             }
         }
     }else{
@@ -83,7 +82,8 @@ exports.send_message = (channel, uname, msg) => {
 // will render Home Page
 exports.getHome = (req, res)=>{
     try{
-        res.render('home',{});
+        let msg = req.query.msg || "";
+        res.render('home',{msg:msg});
     }catch(e){
         console.log("getHome: ", e.message);
     }
@@ -119,7 +119,7 @@ exports.joinChannel = async (req, res)=>{
         res.render("chat", {token:token});
     }catch(e){
         console.log("joinChannel: ", e.message);
-        res.redirect("/home");
+        res.redirect(`/home?msg=${e.message}`);
     }
 }
 

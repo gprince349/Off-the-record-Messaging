@@ -6,4 +6,5 @@ router.post("/createChannel", cont.createChannel);
 router.post("/joinChannel", cont.joinChannel);
 router.get("/leaveChannel", cont.leaveChannel);
 
+
 module.exports = router;
