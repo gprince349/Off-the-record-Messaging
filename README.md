@@ -27,7 +27,7 @@ To provide:-
 	design a web app for chatting
 
 Tech used:-
-	(nodejs)
+	(nodejs) + expressjs
 
 
 

@@ -15,6 +15,11 @@ const Input = document.querySelector('.chat-input')
 
 const chatWindow = document.querySelector('.chat-window')
 
+function updateScroll(){
+    // var element = document.getElementById("yourDivID");
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
 const renderMessage = (message,l) =>{
     const div = document.createElement('div')
     // const div2 = document.createElement('div')
@@ -33,6 +38,7 @@ const renderMessage = (message,l) =>{
     }
     // div2.append(div)
     chatWindow.appendChild(div)
+    updateScroll();
 }
 
 
@@ -47,7 +53,7 @@ chat.addEventListener('submit',event=> {
 socket.onmessage = (msg) =>{
     console.log(msg.data);
     let obj = JSON.parse(msg.data);
-    let text = obj.name+"=>"+obj.msg;
+    let text = "@"+obj.name+"--> "+obj.msg;
     if(obj.error){
         text = obj.error;
     }
