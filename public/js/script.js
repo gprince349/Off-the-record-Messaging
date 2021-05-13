@@ -34,6 +34,7 @@ const renderMessage = (sender,message,l) =>{
         a.style.textAlign = "left"
     }
     chatWindow.appendChild(a);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
 // precompute your DSA key
