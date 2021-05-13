@@ -11,11 +11,14 @@ let channel_users = new Map();
 // add user to channel_user map if channel exists
 // else throw an error
 async function add_user(channel, uname){
-    if(channel_users.get(channel)){
-        if(channel_users.get(channel).find( (x) => x.name === uname )){
+    let ch = channel_users.get(channel);
+    if(ch){
+        if(ch.length >= 2){
+            throw Error(`Channel "${channel}" is full`);
+        }else if(ch.find( (x) => x.name === uname )){
             throw Error(`User with nickname '${uname}' is already in the channel`)
         }else{
-            channel_users.get(channel).push({name:uname, ws:undefined});
+            ch.push({name:uname, ws:undefined});
         }
     }else{
         if(await Channel.exists(channel)){
@@ -33,11 +36,14 @@ exports.remove_user = (channel, uname) => {
         let obj = ch.find( (x) => x.name === uname );
         if(obj){
             ch.splice(ch.indexOf(obj));
-            if(obj.ws){ 
+            if(ch.length === 0){
+                channel_users.delete(channel);
+            }else if(obj.ws){
                 // if valid socket existed only then send left msg bcz
                 // join msg is sent only when socket is attached
                 console.log(`"${uname}" left the channel`);
-                this.send_message(channel, uname, `"${uname}" left the channel`);
+                // this.send_all(channel, {handshake: ch.length});
+                this.send_message(channel, uname, JSON.stringify({info:true, msg:`"${uname}" left the channel`}));
             }
         }
     }else{
@@ -45,6 +51,7 @@ exports.remove_user = (channel, uname) => {
     }
 }
 
+// this will be called when a socket gets created at the very first
 exports.attach_socket = (channel, uname, ws) => {
     let ch = channel_users.get(channel);
     if(ch){
@@ -54,7 +61,8 @@ exports.attach_socket = (channel, uname, ws) => {
                 throw Error("You are already connected from some other Tab/client");
             }else{
                 obj.ws = ws;
-                this.send_message(channel, uname, `"${uname}" joined the channel`);
+                this.send_message(channel, uname, JSON.stringify({handshake: ch.length}));
+                this.send_message(channel, uname, JSON.stringify({info:true, msg:`"${uname}" joined the channel`}));
             }
         }else{
             throw Error(`User '${uname}' does not exist`);
@@ -64,12 +72,27 @@ exports.attach_socket = (channel, uname, ws) => {
     }
 }
 
+// will send message to all users but uname
 exports.send_message = (channel, uname, msg) => {
     let ch = channel_users.get(channel);
     if(ch){
         ch.forEach( x => {
             if(x.name != uname && x.ws && x.ws.readyState == WebSocket.OPEN){
-                x.ws.send(JSON.stringify({name:uname, msg:msg}));
+                x.ws.send(msg);
+            }
+        })
+    }else{
+        throw Error("send_message: Channel does not exists, create new channel");
+    }
+}
+
+// will send message to all users but uname
+exports.send_all = (channel, obj) => {
+    let ch = channel_users.get(channel);
+    if(ch){
+        ch.forEach( x => {
+            if(x.ws && x.ws.readyState == WebSocket.OPEN){
+                x.ws.send(JSON.stringify(obj));
             }
         })
     }else{
