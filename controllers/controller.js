@@ -43,6 +43,7 @@ exports.remove_user = (channel, uname) => {
                 // join msg is sent only when socket is attached
                 console.log(`"${uname}" left the channel`);
                 // this.send_all(channel, {handshake: ch.length});
+                this.send_message(channel, uname, JSON.stringify({handshake: ch.length}));
                 this.send_message(channel, uname, JSON.stringify({info:true, msg:`"${uname}" left the channel`}));
             }
         }

@@ -96,6 +96,8 @@ socket.onmessage = (msg) =>{
             // initiate OTR
             console.log("OTR initiated");
             otrClient.sendQueryMsg();
+        }else{
+            otrClient.endOtr(() => console.log("OTR closed"));
         }
     }
     else if(obj.error){
@@ -104,7 +106,7 @@ socket.onmessage = (msg) =>{
         renderMessage("", obj.msg, 1)
     }else{
         // give to otrClient
-        console.log(obj);
+        // console.log(obj);
         otrClient.receiveMsg(obj);
     }
 }
